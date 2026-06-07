@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { getDb, saveDb } from '../config/db.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
+// Token expiration in seconds (15 minutes)
+const JWT_EXPIRES_IN = 900;
 
 const SALT_ROUNDS = 10;
 
@@ -62,6 +67,55 @@ export async function register(req: Request, res: Response): Promise<void> {
     });
   } catch (error) {
     console.error('Registration error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/**
+ * POST /login
+ * Authenticates a user and returns a JWT.
+ */
+export async function login(req: Request, res: Response): Promise<void> {
+  try {
+    const { username, password } = req.body;
+
+    // Validate input
+    if (!username || !password) {
+      res.status(400).json({ error: 'Username and password are required' });
+      return;
+    }
+
+    const db = getDb();
+
+    // Find user by username
+    const result = db.exec('SELECT id, username, password FROM users WHERE username = ?', [username]);
+    if (result.length === 0 || result[0].values.length === 0) {
+      res.status(401).json({ error: 'Invalid username or password' });
+      return;
+    }
+
+    const [userId, , hashedPassword] = result[0].values[0] as [number, string, string];
+
+    // Compare provided password with stored hash
+    const isPasswordValid = await bcrypt.compare(password, hashedPassword);
+    if (!isPasswordValid) {
+      res.status(401).json({ error: 'Invalid username or password' });
+      return;
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+      { id: userId, username },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    res.status(200).json({
+      message: 'Login successful',
+      token,
+    });
+  } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
