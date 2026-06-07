@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getDb, saveDb } from '../config/db.js';
+import { AuthenticatedRequest } from '../middleware/auth.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
 // Token expiration in seconds (15 minutes)
@@ -116,6 +117,48 @@ export async function login(req: Request, res: Response): Promise<void> {
     });
   } catch (error) {
     console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/**
+ * GET /profile
+ * Returns the authenticated user's profile information.
+ * Requires a valid JWT (handled by auth middleware).
+ */
+export function getProfile(req: AuthenticatedRequest, res: Response): void {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    const db = getDb();
+
+    // Fetch user details (excluding password)
+    const result = db.exec(
+      'SELECT id, username, created_at FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (result.length === 0 || result[0].values.length === 0) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const [id, username, createdAt] = result[0].values[0] as [number, string, string];
+
+    res.status(200).json({
+      user: {
+        id,
+        username,
+        created_at: createdAt,
+      },
+    });
+  } catch (error) {
+    console.error('Profile error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
