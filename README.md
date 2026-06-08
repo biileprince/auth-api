@@ -50,6 +50,14 @@ npm start
 
 The server starts at `http://localhost:3000`.
 
+## API Documentation
+
+Swagger UI is available when the server is running. Visit:
+
+```
+http://localhost:3000/api-docs
+```
+
 ## API Endpoints
 
 ### `POST /register`
