@@ -9,7 +9,14 @@
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts"
   },
-  "keywords": ["jwt", "auth", "express", "sqlite", "rest-api", "typescript"],
+  "keywords": [
+    "jwt",
+    "auth",
+    "express",
+    "sqlite",
+    "rest-api",
+    "typescript"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -17,7 +24,8 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "sql.js": "^1.11.0"
+    "sql.js": "^1.11.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
